@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -23,7 +24,7 @@ public class Snapshot {
     private byte[] metaData;
 
     private long version;
-    private ZonedDateTime timeStamp;
+    private LocalDateTime timeStamp;
 
     @Override
     public String toString() {

@@ -2,8 +2,8 @@ package es;
 
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.sqlclient.RowSet;
-import io.vertx.sqlclient.Row;
-import io.vertx.sqlclient.SqlConnection;
+import io.vertx.mutiny.sqlclient.Row;
+import io.vertx.mutiny.sqlclient.SqlConnection;
 
 import java.util.List;
 
