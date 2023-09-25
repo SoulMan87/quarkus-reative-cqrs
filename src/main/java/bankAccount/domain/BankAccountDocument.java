@@ -1,4 +1,4 @@
-package domain;
+package bankAccount.domain;
 
 import io.quarkus.mongodb.panache.common.MongoEntity;
 import lombok.AllArgsConstructor;

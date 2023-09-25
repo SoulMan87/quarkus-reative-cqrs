@@ -1,6 +1,6 @@
-package events;
+package bankAccount.events;
 
-import domain.BankAccountAggregate;
+import bankAccount.domain.BankAccountAggregate;
 import es.BaseEvent;
 import lombok.Builder;
 import lombok.Data;

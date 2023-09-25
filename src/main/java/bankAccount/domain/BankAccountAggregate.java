@@ -1,13 +1,13 @@
-package domain;
+package bankAccount.domain;
 
+import bankAccount.events.AddressUpdatedEvent;
+import bankAccount.events.BalanceDepositedEvent;
+import bankAccount.events.BankAccountCreatedEvent;
+import bankAccount.events.EmailChangedEvent;
 import es.AggregateRoot;
 import es.Event;
 import es.SerializerUtils;
 import es.exceptions.InvalidEventTypeException;
-import events.AddressUpdatedEvent;
-import events.BalanceDepositedEvent;
-import events.BankAccountCreatedEvent;
-import events.EmailChangedEvent;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
