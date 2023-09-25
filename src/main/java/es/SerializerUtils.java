@@ -40,7 +40,7 @@ public class SerializerUtils {
         }
     }
 
-    public static Event[] deserializeEventsFromJsonBytes(final byte[] jsonByte) {
+    public static es.Event[] deserializeEventsFromJsonBytes(final byte[] jsonByte) {
         try {
             return objectMapper.readValue (jsonByte, Event[].class);
         } catch (IOException e) {
