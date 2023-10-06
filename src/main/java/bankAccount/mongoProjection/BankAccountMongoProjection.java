@@ -14,8 +14,6 @@ import es.SerializerUtils;
 import es.exceptions.InvalidEventTypeException;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import mappers.BankAccountMapper;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.faulttolerance.Timeout;
@@ -24,6 +22,8 @@ import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.jboss.logging.Logger;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.math.BigDecimal;
 import java.util.List;
 

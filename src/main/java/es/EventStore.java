@@ -1,5 +1,6 @@
 package es;
 
+
 import bankAccount.exceptions.BankAccountNotFoundException;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.pgclient.PgPool;
@@ -7,11 +8,12 @@ import io.vertx.mutiny.sqlclient.Row;
 import io.vertx.mutiny.sqlclient.RowSet;
 import io.vertx.mutiny.sqlclient.SqlConnection;
 import io.vertx.mutiny.sqlclient.Tuple;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
+
 import org.eclipse.microprofile.opentracing.Traced;
 import org.jboss.logging.Logger;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,11 +29,11 @@ import static es.Constants.METADATA;
 import static es.Constants.SNAPSHOT_ID;
 import static es.Constants.TIMESTAMP;
 import static es.Constants.VERSION;
-
 @ApplicationScoped
 public class EventStore implements EventStoreDB {
 
     private final static Logger logger = Logger.getLogger (EventStore.class);
+
     private final int SNAPSHOT_FREQUENCY = 3;
     private final static String SAVE_EVENTS_QUERY = "INSERT INTO events (aggregate_id, aggregate_type, event_type, data, metadata, version, timestamp) " +
             "values ($1, $2, $3, $4, $5, $6, now())";
@@ -45,6 +47,7 @@ public class EventStore implements EventStoreDB {
     private final static String EXISTS_QUERY = "SELECT e.aggregate_id FROM events e WHERE e.aggregate_id = $1 LIMIT 1";
     private final static String GET_SNAPSHOT_QUERY = "select snapshot_id, aggregate_id, aggregate_type, data, metadata, version, timestamp from snapshots s where s.aggregate_id = $1";
 
+
     @Inject
     EventBus eventBus;
 
@@ -57,14 +60,12 @@ public class EventStore implements EventStoreDB {
         final List<Event> changes = new ArrayList<> (aggregate.getChanges ());
         return pgPool.withTransaction (client -> handleConcurrency (client, aggregate.getId ())
                 .chain (v -> saveEvents (client, aggregate.getChanges ()))
-                .chain (s -> aggregate.getVersion () % SNAPSHOT_FREQUENCY == 0
-                        ? saveSnapshot (client, aggregate) : Uni.createFrom ().item (s))
+                .chain (s -> aggregate.getVersion () % SNAPSHOT_FREQUENCY == 0 ? saveSnapshot (client, aggregate) : Uni.createFrom ().item (s))
                 .onItem ().invoke (res -> logger.infof ("AFTER SAVE SNAPSHOT: >>>>>> %s", res.rowCount ()))
                 .chain (a -> eventBus.publish (changes))
-                .onItem ().invoke (re -> logger.info ("AFTER EVENT BUS PUBLISH : >>>>>> %s"))
+                .onItem ().invoke (res -> logger.info ("AFTER EVENT BUS PUBLISH : >>>>>> %s"))
                 .onFailure ().invoke (ex -> logger.error ("(save) eventBus.publish ex", ex))
-                .onItem ().invoke (success -> logger.infof ("save succes: %s", success)));
-
+                .onItem ().invoke (success -> logger.infof ("save success: %s", success)));
     }
 
     @Override
@@ -76,21 +77,23 @@ public class EventStore implements EventStoreDB {
                         .chain (events -> raiseAggregateEvents (a, events)));
     }
 
-    @Override
     @Traced
+    @Override
     public Uni<RowSet<Row>> saveEvents(SqlConnection client, List<Event> events) {
-        final List<Tuple> tupleList = events.stream ().map (event -> Tuple.of (
+        final List<io.vertx.mutiny.sqlclient.Tuple> tupleList = events.stream ().map (event -> Tuple.of (
                 event.getAggregateId (),
                 event.getAggregateType (),
                 event.getEventType (),
                 Objects.isNull (event.getData ()) ? new byte[]{} : event.getData (),
                 Objects.isNull (event.getMetaData ()) ? new byte[]{} : event.getMetaData (),
                 event.getVersion ())).toList ();
+
         if (tupleList.size () == 1) {
             return client.preparedQuery (SAVE_EVENTS_QUERY).execute (tupleList.get (0))
                     .onFailure ().invoke (ex -> logger.error ("(saveEvents) preparedQuery ex:", ex))
                     .onItem ().invoke (result -> logger.infof ("(saveEvents) execute result: %s", result.rowCount ()));
         }
+
         return client.preparedQuery (SAVE_EVENTS_QUERY).executeBatch (tupleList)
                 .onFailure ().invoke (ex -> logger.error ("(executeBatch) ex:", ex))
                 .onItem ().invoke (result -> logger.infof ("(saveEvents) execute result: %s", result.rowCount ()));
@@ -104,30 +107,39 @@ public class EventStore implements EventStoreDB {
                 .onFailure ().invoke (ex -> logger.error ("(loadEvents) preparedQuery ex:", ex));
     }
 
-    @Override
+
     @Traced
-    public Uni<Boolean> exist(String aggregateId) {
-        return pgPool.preparedQuery (EXISTS_QUERY).execute (Tuple.of (aggregateId))
-                .map (m -> m.rowCount () > 0)
-                .onFailure ().invoke (ex -> logger.error ("(exists) aggregateId: %s, ex:", aggregateId, ex));
+    private Uni<RowSet<Row>> handleConcurrency(SqlConnection client, String aggregateID) {
+        return client.preparedQuery (HANDLE_CONCURRENCY_QUERY).execute (Tuple.of (aggregateID))
+                .onFailure ().invoke (ex -> logger.error ("(handleConcurrency) ex", ex));
+    }
+
+
+    @Traced
+    private <T extends AggregateRoot> Uni<RowSet<Row>> saveSnapshot(SqlConnection client, T aggregate) {
+        aggregate.toSnapshot ();
+        final var snapshot = EventSourcingUtils.snapshotFromAggregate (aggregate);
+        return client.preparedQuery (SAVE_SNAPSHOT_QUERY).execute (Tuple.of (
+                        snapshot.getAggregateId (),
+                        snapshot.getAggregateType (),
+                        Objects.isNull (snapshot.getData ()) ? new byte[]{} : snapshot.getData (),
+                        Objects.isNull (snapshot.getMetaData ()) ? new byte[]{} : snapshot.getMetaData (),
+                        snapshot.getVersion ()))
+                .onFailure ().invoke (ex -> logger.error ("(saveSnapshot) preparedQuery execute:", ex));
     }
 
     @Traced
-    private <T extends AggregateRoot> Uni<T> raiseAggregateEvents(T aggregate, RowSet<Event> events) {
-        if (events != null && events.rowCount () > 0) {
-            events.forEach (event -> {
-                aggregate.raiseEvent (event);
-                logger.infof ("(raiseAggregateEvents) event version: %s", event.getVersion ());
-            });
-            return Uni.createFrom ().item (aggregate);
-        } else {
-            return (aggregate.getVersion () == 0) ? Uni.createFrom ().failure
-                    (new BankAccountNotFoundException (aggregate.getId ())) : Uni.createFrom ().item (aggregate);
-        }
+    private Uni<Snapshot> getSnapshot(SqlConnection client, String aggregateID) {
+        return client.preparedQuery (GET_SNAPSHOT_QUERY).mapping (EventStore::snapshotFromRow)
+                .execute (Tuple.of (aggregateID))
+                .onFailure ().invoke (ex -> logger.error ("(getSnapshot) preparedQuery ex:", ex))
+                .onItem ().transform (result -> result.size () == 0 ? null : result.iterator ().next ())
+                .onItem ().invoke (snapshot -> logger.infof ("(getSnapshot) snapshot version: %s", Optional.ofNullable (snapshot)
+                        .map (Snapshot::getVersion)));
     }
 
     @Traced
-    private <T extends AggregateRoot> AggregateRoot getAggregate(String aggregateId, Class<T> aggregateType) {
+    private <T extends AggregateRoot> T getAggregate(final String aggregateId, final Class<T> aggregateType) {
         try {
             return aggregateType.getConstructor (String.class).newInstance (aggregateId);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
@@ -145,39 +157,34 @@ public class EventStore implements EventStoreDB {
         return EventSourcingUtils.aggregateFromSnapshot (snapshot, aggregateType);
     }
 
-    @Traced
-    private Uni<Snapshot> getSnapshot(SqlConnection client, String aggregateId) {
-        return client.preparedQuery (GET_SNAPSHOT_QUERY).mapping (EventStore::snapshotFromRow)
-                .execute (Tuple.of (aggregateId))
-                .onFailure ().invoke (ex -> logger.error ("(getSnapshot) preparedQuery ex:", ex))
-                .onItem ().transform (result -> result.size () == 0 ? null : result.iterator ().next ())
-                .onItem ().invoke (snapshot -> logger.infof ("(getSnapshot) snapshot version: %s", Optional.ofNullable (snapshot)
-                        .map (Snapshot::getVersion)));
-    }
 
     @Traced
-    private <T extends AggregateRoot> Uni<RowSet<Row>> saveSnapshot(SqlConnection client, T aggregate) {
-        aggregate.toSnapshot ();
-        final var snapshot = EventSourcingUtils.snapshotFromAggregate (aggregate);
-        return client.preparedQuery (SAVE_SNAPSHOT_QUERY).execute (Tuple.of (
-                        snapshot.getAggregateId (),
-                        snapshot.getAggregateType (),
-                        Objects.isNull (snapshot.getData ()) ? new byte[]{} : snapshot.getData (),
-                        Objects.isNull (snapshot.getMetaData ()) ? new byte[]{} : snapshot.getMetaData (),
-                        snapshot.getVersion ()))
-                .onFailure ().invoke (ex -> logger.error ("(saveSnapshot) preparedQuery execute:", ex));
+    private <T extends AggregateRoot> Uni<T> raiseAggregateEvents(T aggregate, RowSet<Event> events) {
+        if (events != null && events.rowCount () > 0) {
+            events.forEach (event -> {
+                aggregate.raiseEvent (event);
+                logger.infof ("(raiseAggregateEvents) event version: %s", event.getVersion ());
+            });
+            return Uni.createFrom ().item (aggregate);
+        } else {
+            return (aggregate.getVersion () == 0) ? Uni.createFrom ().failure (new BankAccountNotFoundException (aggregate.getId ())) : Uni.createFrom ().item (aggregate);
+        }
     }
 
+    @Override
     @Traced
-    private Uni<RowSet<Row>> handleConcurrency(SqlConnection client, String aggregateID) {
-        return client.preparedQuery (HANDLE_CONCURRENCY_QUERY).execute (Tuple.of (aggregateID))
-                .onFailure ().invoke (ex -> logger.error ("(handleConcurrency) ex", ex));
+    public Uni<Boolean> exists(String aggregateId) {
+        return pgPool.preparedQuery (EXISTS_QUERY).execute (Tuple.of (aggregateId))
+                .map (m -> m.rowCount () > 0)
+                .onFailure ().invoke (ex -> logger.error ("(exists) aggregateId: %s, ex:", aggregateId, ex));
     }
+
 
     private static Snapshot snapshotFromRow(Row row) {
         return Snapshot.builder ()
                 .id (row.getUUID (SNAPSHOT_ID))
                 .aggregateId (row.getString (AGGREGATE_ID))
+                .aggregateType (row.getString (AGGREGATE_TYPE))
                 .data (row.getBuffer (DATA).getBytes ())
                 .metaData (row.getBuffer (METADATA).getBytes ())
                 .version (row.getLong (VERSION))

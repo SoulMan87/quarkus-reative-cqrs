@@ -3,11 +3,11 @@ package bankAccount.commands;
 import bankAccount.domain.BankAccountAggregate;
 import es.EventStoreDB;
 import io.smallrye.mutiny.Uni;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.eclipse.microprofile.opentracing.Traced;
 import org.jboss.logging.Logger;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.util.UUID;
 
 @ApplicationScoped

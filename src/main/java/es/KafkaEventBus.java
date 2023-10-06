@@ -3,13 +3,13 @@ package es;
 
 import io.smallrye.mutiny.Uni;
 import io.smallrye.reactive.messaging.kafka.KafkaClientService;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.opentracing.Traced;
 import org.jboss.logging.Logger;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;

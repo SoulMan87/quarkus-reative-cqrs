@@ -5,9 +5,9 @@ import io.quarkus.mongodb.panache.reactive.ReactivePanacheMongoRepository;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import io.smallrye.mutiny.Uni;
-import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.opentracing.Traced;
 
+import javax.enterprise.context.ApplicationScoped;
 import java.util.List;
 
 @ApplicationScoped

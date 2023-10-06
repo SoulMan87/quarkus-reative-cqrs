@@ -4,12 +4,12 @@ import bankAccount.exceptions.BankAccountNotFoundException;
 import exceptions.ExceptionResponseDTO;
 import exceptions.ExecutionTimeoutException;
 import exceptions.InternalServerErrorException;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.RestResponse;
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.core.Response;
 import java.time.LocalDateTime;
 
 @ApplicationScoped
