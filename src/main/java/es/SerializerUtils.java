@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import jdk.jfr.Event;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -40,7 +39,7 @@ public class SerializerUtils {
         }
     }
 
-    public static es.Event[] deserializeEventsFromJsonBytes(final byte[] jsonByte) {
+    public static Event[] deserializeEventsFromJsonBytes(final byte[] jsonByte) {
         try {
             return objectMapper.readValue (jsonByte, Event[].class);
         } catch (IOException e) {

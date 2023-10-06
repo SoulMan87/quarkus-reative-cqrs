@@ -6,5 +6,5 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public record DepositAmountRequestDTO(
-        @Min(value = 300, message = "minimal amount is 300") @NotNull BigDecimal balance) {
+        @Min(value = 300, message = "minimal amount is 300") @NotNull BigDecimal amount) {
 }
