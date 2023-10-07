@@ -1,59 +1,49 @@
-# quarkus-reactive-cqrs
+# Quarkus Reactive CQRS Bank Account
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+This repository showcases the implementation of a Command Query Responsibility Segregation (CQRS) architecture for a bank account application using Quarkus.
 
-If you want to learn more about Quarkus, please visit its website: https://quarkus.io/ .
+# Features
 
-## Running the application in dev mode
+1. **[Quarkus](https://quarkus.io/):** A cloud-native, Kubernetes-native Java framework.
+2. **[Reactive Programming](https://www.reactivemanifesto.org/):** Utilizes reactive programming techniques for improved scalability and responsiveness.
+3. **[Docker](https://www.docker.com/) & [Kubernetes](https://kubernetes.io/):** Containerization and orchestration using Docker and Kubernetes for easy deployment and scalability.
+4. **[Swagger](https://swagger.io/tools/swagger-ui/):** Interactive API documentation for easy testing and exploration.
+5. **[Makefile](https://www.gnu.org/software/make/manual/make.html):** Simplified build and project management with Makefile.
+6. **[Kafka](https://kafka.apache.org/uses):** Event sourcing and message queuing with Apache Kafka.
+7. **[Grafana](https://grafana.com/) & [Prometheus](https://prometheus.io/):** Monitoring and metrics collection for performance analysis.
+8. **[Jaeger](https://www.jaegertracing.io/):** Distributed tracing for improved visibility and debugging.
+9. **[MongoDB](https://www.mongodb.com/):** NoSQL database for storing application data.
+10. **[Redis](https://redis.io/):** In-memory data store for caching and quick data access.
+11. **[ZooKeeper](https://zookeeper.apache.org/):** Distributed coordination service.
+12. **[PostgreSQL](https://www.postgresql.org/):** Relational database for data persistence.
 
-You can run your application in dev mode that enables live coding using:
+## Getting Started
 
-```shell script
-./mvnw compile quarkus:dev
+To run this project, follow these steps:
+
+```shell
+# Clone the repository
+git clone https://github.com/SoulMan87/quarkus-reative-cqrs
+# Change to master branch
+git checkout master
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
-
-## Packaging and running the application
-
-The application can be packaged using:
-
-```shell script
-./mvnw package
+## Build and deploy the application using the provided Makefile
+```bash
+make build
+make deploy
 ```
+## Usage
+This application allows you to perform various banking operations, including creating accounts, transferring funds, and retrieving account balances. Refer to the Swagger documentation for detailed information on available endpoints and their usage.
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+## Contributions
+Feel free to contribute to this project by creating issues or submitting pull requests. Your input is highly appreciated!
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
+## License
+This project is licensed under the [MIT License](https://opensource.org/license/mit/).
 
-If you want to build an _über-jar_, execute the following command:
+## Contact
+If you have any questions or need further assistance, please contact me at jonathanhinestroza87@gmail.com.
 
-```shell script
-./mvnw package -Dquarkus.package.type=uber-jar
-```
-
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using:
-
-```shell script
-./mvnw package -Dnative
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./target/quarkus-reactive-cqrs-1.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.
-
-## Related Guides
-
-- Micrometer metrics ([guide](https://quarkus.io/guides/micrometer)): Instrument the runtime and your application with
-  dimensional metrics using Micrometer.
+## Acknowledgments
+Special thanks to the Quarkus community and the maintainers of the libraries and tools used in this project for their invaluable contributions.
